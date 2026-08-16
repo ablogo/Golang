@@ -1,0 +1,96 @@
+# General
+*obj
+*bin
+*wwwroot
+*.pem
+/dist
+
+# Nextjs specific
+.next
+/build
+
+# Logs
+logs
+*.log
+
+# Temp directory
+.temp
+.tmp
+proxy/
+auth-service/
+
+# Environment files
+#.env
+.venv
+env/
+venv/
+*.ini
+
+# Docker
+#*Dockerfile
+
+# Kubernetes
+kubernetes/
+kubectl
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Python
+__pycache__/
+*.manifest
+*.spec
+*py.cover
+
+# VSCode
+*.vs
+*.vscode
+
+# Sqlite
+*.db
+*.db*
+
+# Expo
+.expo
+
+# npm
+*node_modules
+
+# Visual Studio
+*appsettings.Development.json
+*.vspscc
+*.vssscc
+*.psess
+*.vsp
+*.vspx
+*.sap
+*.e2e
+
+# Visual Studio cache files
+*.[Cc]ache
+!?*.[Cc]ache/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# SQL Server files
+*.mdf
+*.ldf
+*.ndf
+
+# MSTest test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# NUNIT
+*.VisualState.xml
+TestResult.xml
+
+# MacOS
+.DS_Store
