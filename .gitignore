@@ -18,9 +18,11 @@ logs
 .tmp
 proxy/
 auth-service/
+watcher.db*
+kubectl
 
 # Environment files
-#.env
+.env
 .venv
 env/
 venv/

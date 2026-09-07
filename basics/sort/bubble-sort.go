@@ -1,7 +1,7 @@
-package basics
+package sort
 
 import "fmt"
 
-func main() {
+func BubbleSort() {
 	fmt.Println("Hello world")
 }
