@@ -1,0 +1,11 @@
+# watcher
+
+Small program running in the background verifiying the next things.
+
+* If a file are change, capable to overwrite the file with the original content.
+
+* If the kubernetes cluster is running.
+
+* If a website is online.
+
+Keeping a record og their findings, as well as saving the program's own logs in an SQLite database.
