@@ -1,23 +1,28 @@
 package services
 
 import (
+	"encoding/json"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
+
+	"watcher/models"
 )
 
 func GetPort() string {
 	port, err := strconv.Atoi(os.Getenv("SERVER_PORT"))
 	if err != nil {
-		port = 8080
+		port = 7015
 	}
+
 	return strconv.Itoa(port)
 }
 
-func GetEnvValues() (url string, k8Cmd string, k8Params []string, timeout int) {
+func GetEnvValues() (url string, k8Cmd string, k8Params []string, timeout int, files []models.Files) {
 	url = os.Getenv("WEBPAGE_URL")
 	if url == "" {
-		url = "http://localhost:32001"
+		url = "http://localhost"
 	}
 
 	k8Cmd = os.Getenv("K8_COMMAND")
@@ -37,5 +42,12 @@ func GetEnvValues() (url string, k8Cmd string, k8Params []string, timeout int) {
 		timeout = 12
 	}
 
+	filesEnv := os.Getenv("FILES")
+	if filesEnv != "" {
+		err = json.Unmarshal([]byte(filesEnv), &files)
+		if err != nil {
+			slog.Error("Error parsing JSON variable.")
+		}
+	}
 	return
 }

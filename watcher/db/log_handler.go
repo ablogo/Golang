@@ -16,7 +16,7 @@ type SQLiteHandler struct {
 	opts slog.HandlerOptions
 }
 
-// NewSQLiteHandler creates the table if not exist and returns the handler
+// Creates the table if not exist and returns the handler
 func NewSQLiteHandler(db *sql.DB, opts slog.HandlerOptions) *SQLiteHandler {
 	query := `
 	CREATE TABLE IF NOT EXISTS logs (
@@ -43,7 +43,7 @@ func (h *SQLiteHandler) Enabled(_ context.Context, level slog.Level) bool {
 	return level >= minLevel.Level()
 }
 
-// Handle processes the log record and inserts it into SQLite
+// Handle log record process and inserts it into SQLite
 func (h *SQLiteHandler) Handle(ctx context.Context, r slog.Record) error {
 	// Extract attributes into a map to convert to JSON
 	attrs := make(map[string]any)
@@ -63,7 +63,6 @@ func (h *SQLiteHandler) Handle(ctx context.Context, r slog.Record) error {
 		sourceFile = fmt.Sprintf("%s:%s:%d", r.Source().File, r.Source().Function, r.Source().Line)
 	}
 
-	// Execute async or sync database write
 	query := `INSERT INTO logs (created_at, level, message, source, attributes) VALUES (?, ?, ?, ?, ?)`
 	_, err = h.db.ExecContext(ctx, query,
 		r.Time.Format(time.RFC3339),

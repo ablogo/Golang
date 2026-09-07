@@ -37,6 +37,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	sqlyte.Initialize()
 
 	// Configure the SQLite custom logger options
 	opts := slog.HandlerOptions{
@@ -47,7 +48,6 @@ func main() {
 	sqliteHandler := repository.NewSQLiteHandler(sqlyte.Db, opts)
 	logger := slog.New(sqliteHandler)
 
-	// Set as application default
 	slog.SetDefault(logger)
 
 	// Create context that listens for interrupt signals from the OS
@@ -58,11 +58,11 @@ func main() {
 	go httpHandler.StartServer()
 	go backgroundWork(ctx, sqlyte, logger)
 
-	// Block main execution until a signal is received
+	// Block main "thread" until a stop signal is received
 	<-ctx.Done()
 	fmt.Println(time.Now().UTC(), "Shutdown signal received. Cleaning up..")
 
-	// Perform cleanup (e.g., closing database, flushing logs)
+	// Perform cleanup (closing database, flushing logs)
 	httpHandler.ShutdownServer()
 	sqlyte.Close()
 
@@ -73,7 +73,7 @@ func backgroundWork(ctx context.Context, repo *repository.Sqlyte, log *slog.Logg
 
 	fmt.Println(time.Now().UTC(), "Background worker started..")
 
-	url, k8Cmd, k8Params, timeout := services.GetEnvValues()
+	url, k8Cmd, k8Params, timeout, files := services.GetEnvValues()
 
 	for {
 		select {
@@ -81,6 +81,9 @@ func backgroundWork(ctx context.Context, repo *repository.Sqlyte, log *slog.Logg
 			fmt.Println(time.Now().UTC(), "Background shutdown signal received.")
 			return
 		default:
+			for _, item := range files {
+				services.VerifyFileNotChanged(repo, item.Type, item.Path, item.Content, item.Change)
+			}
 			services.CheckWebSiteStatus(repo, log, url)
 			services.CheckK8sStatus(repo, log, k8Cmd, k8Params...)
 			time.Sleep(time.Minute * time.Duration(timeout))
