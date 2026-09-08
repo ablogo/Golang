@@ -13,6 +13,7 @@ import (
 
 	"watcher/api"
 	repository "watcher/db"
+	"watcher/logging"
 	"watcher/services"
 
 	"github.com/joho/godotenv"
@@ -45,7 +46,7 @@ func main() {
 		AddSource: true,
 	}
 
-	sqliteHandler := repository.NewSQLiteHandler(sqlyte.Db, opts)
+	sqliteHandler := logging.NewSQLiteHandler(sqlyte.Db, opts)
 	logger := slog.New(sqliteHandler)
 
 	slog.SetDefault(logger)

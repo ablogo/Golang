@@ -15,7 +15,7 @@ func VerifyFileNotChanged(repo *repo.Sqlyte, fileType string, path string, origi
 	isError := true
 	description := ""
 
-	content, err := os.ReadFile("")
+	content, err := os.ReadFile(path)
 	if err != nil {
 		description = "Failed to read the file: "
 		slog.Error(description, "error", err)

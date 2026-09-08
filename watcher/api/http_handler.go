@@ -28,6 +28,8 @@ func (h *HttpHandler) getRecords(w http.ResponseWriter, r *http.Request) {
 		status = http.StatusNotFound
 		content = "text/html; charset=UTF-8"
 		w.Header().Set("Cache-Control", "no-cache, no-store, or max-age=0")
+		w.WriteHeader(status)
+		return
 	}
 
 	w.Header().Set("Content-Type", content)

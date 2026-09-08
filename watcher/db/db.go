@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -18,10 +19,10 @@ func (s *Sqlyte) Initialize() error {
 		message TEXT NOT NULL,
 		description TEXT NOT NULL,
 		is_error INTEGER NOT NULL,
-		created_at TEXT DEFAULT (datetime('now'))
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);`
 	_, err := s.Db.Exec(query)
-	if err != nil {
+	if err != nil && !strings.Contains(err.Error(), "exists") {
 		fmt.Println(time.Now().UTC(), "Error init db: ", err)
 	}
 
