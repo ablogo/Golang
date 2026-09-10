@@ -3,67 +3,56 @@ package services
 import (
 	"fmt"
 
-	"src/db"
 	"src/models"
 )
 
 func GetImage(id int) (picture *models.Picture) {
-	db := db.InitDB()
-
 	db.First(&picture, id)
 	return
 }
 
 func GetImageByUser(user_id int) (picture *models.Picture) {
-	db := db.InitDB()
-
-	if result := db.Where("id = (?)", db.Select("picture_id").Where("id = ?", user_id).Table("users")).Find(&picture); result.Error != nil {
+	if result := db.Where("id = (?)", db.Select("pictureId").Where("id = ?", user_id).Table("users")).Find(&picture); result.Error != nil {
 		picture = nil
 		fmt.Println(result)
 	}
 	return
 }
 
-func SaveImage(image []byte, content_type string, file_name string) (picture_id int, result bool) {
-	db := db.InitDB()
-
+func SaveImage(image []byte, contentType string, fileName string) (pictureId int, result bool) {
 	picture := models.Picture{
 		Picture:     &image,
-		ContentType: &content_type,
-		FileName:    &file_name,
+		ContentType: &contentType,
+		FileName:    &fileName,
 	}
 
 	db_result := db.Create(&picture)
 	if db_result.Error == nil {
-		picture_id = picture.Id
+		pictureId = picture.Id
 		result = true
 	}
 	return
 }
 
-func SaveImageURL(image_url string) (picture_id int, result bool) {
-	db := db.InitDB()
-
+func SaveImageURL(image_url string) (pictureId int, result bool) {
 	picture := models.Picture{
 		PictureUrl: &image_url,
 	}
 
 	db_result := db.Create(picture)
 	if db_result.Error == nil {
-		picture_id = picture.Id
+		pictureId = picture.Id
 		result = true
 	}
 	return
 }
 
-func UpdateImage(id int, image []byte, content_type string, file_name string) (result bool) {
-	db := db.InitDB()
-
+func UpdateImage(id int, image []byte, contentType string, fileName string) (result bool) {
 	db_result := db.Save(&models.Picture{
 		Id:          id,
 		Picture:     &image,
-		ContentType: &content_type,
-		FileName:    &file_name,
+		ContentType: &contentType,
+		FileName:    &fileName,
 	})
 	if db_result.Error == nil {
 		result = true

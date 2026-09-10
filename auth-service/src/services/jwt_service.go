@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	"src/models"
@@ -22,9 +23,11 @@ func CreateToken(claims models.JWTClaims, expiration_time int) (string, error) {
 	return token.SignedString(jwtSecret)
 }
 
-func ValidateToken(token string) (user_id int, is_valid bool) {
-	claims, is_valid := validate(token)
-	user_id = claims.UserId
+func ValidateToken(token string) (userId int, isValid bool) {
+	if claims, ok := validate(token); ok {
+		isValid = ok
+		userId = claims.UserId
+	}
 	return
 }
 
@@ -40,6 +43,7 @@ func validate(token string) (*models.JWTClaims, bool) {
 	})
 
 	if err != nil || !token_obj.Valid {
+		slog.Error("Invalid token. ", "error", err.Error())
 		return nil, false
 	}
 
