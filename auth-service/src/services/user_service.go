@@ -1,12 +1,16 @@
 package services
 
 import (
-	"src/db"
+	database "src/db"
 	"src/models"
+	"src/utils"
 )
 
+var settings = &utils.Settings{}
+var dbHandler = &database.DBHandler{Settings: settings.GetInstance()}
+var db = dbHandler.InitDB()
+
 func CreateUser(new_user models.SignUp) (result bool) {
-	db := db.InitDB()
 	user := models.User{
 		Name:     new_user.Name,
 		LastName: new_user.LastName,
@@ -23,18 +27,21 @@ func CreateUser(new_user models.SignUp) (result bool) {
 }
 
 func GetUser(id int, dependencies []string) (user *models.User) {
-	db := db.InitDB()
+	// To avoid repeating over and over "AND "users"."id" = 1", a new variable is used,
+	// because GORM mutates the query state due to the "db" is a global variable.
+	query := db
 
 	for _, value := range dependencies {
-		db = db.Preload(value)
+		query = db.Preload(value)
 	}
-	db.Find(&user, id)
+	err := query.Find(&user, id).Error
+	if err != nil {
+		return nil
+	}
 	return
 }
 
 func GetUserByEmail(email string) (user *models.User) {
-	db := db.InitDB()
-
 	if result := db.First(&user, "email = ?", email); result.Error != nil {
 		user = nil
 	}
@@ -42,7 +49,6 @@ func GetUserByEmail(email string) (user *models.User) {
 }
 
 func GetUsers() (users []models.User) {
-	db := db.InitDB()
 	users = []models.User{}
 
 	result := db.Find(&users)
@@ -54,7 +60,6 @@ func GetUsers() (users []models.User) {
 }
 
 func DeleteUser(id int) bool {
-	db := db.InitDB()
 	result := db.Delete(&models.User{}, &id)
 
 	if result.RowsAffected == 1 {
@@ -65,12 +70,21 @@ func DeleteUser(id int) bool {
 }
 
 func UpdateUser(updated_user models.User) bool {
-	db := db.InitDB()
-
 	result := db.Model(&updated_user).Updates(models.User{
-		Name:      updated_user.Name,
-		LastName:  updated_user.LastName,
-		PictureId: updated_user.PictureId,
+		Name:     updated_user.Name,
+		LastName: updated_user.LastName,
+	})
+
+	if result.RowsAffected == 1 {
+		return true
+	} else {
+		return false
+	}
+}
+
+func UpdateUserImage(updated_user models.User, pictureId int) bool {
+	result := db.Model(&updated_user).Updates(models.User{
+		PictureId: &pictureId,
 	})
 
 	if result.RowsAffected == 1 {
@@ -81,9 +95,6 @@ func UpdateUser(updated_user models.User) bool {
 }
 
 func ChangePassword(user *models.User, password string) (result bool) {
-
-	db := db.InitDB()
-
 	if user != nil {
 		r := db.Model(&user).Update("password", hashPassword(password))
 
@@ -95,8 +106,6 @@ func ChangePassword(user *models.User, password string) (result bool) {
 }
 
 func DisableUser(user *models.User, value bool) bool {
-	db := db.InitDB()
-
 	result := db.Model(&user).Updates(map[string]any{"Disabled": value})
 
 	if result.RowsAffected == 1 {
@@ -106,16 +115,14 @@ func DisableUser(user *models.User, value bool) bool {
 	}
 }
 
-func AddPicture(user *models.User, image []byte, content_type string, file_name string) (result bool) {
-
+func AddPicture(user *models.User, image []byte, contentType string, fileName string) (result bool) {
 	if user.PictureId == nil {
-		picture_id, result := SaveImage(image, content_type, file_name)
+		picture_id, result := SaveImage(image, contentType, fileName)
 		if result {
-			user.PictureId = &picture_id
-			result = UpdateUser(*user)
+			result = UpdateUserImage(*user, picture_id)
 		}
 	} else {
-		result = UpdateImage(*user.PictureId, image, content_type, file_name)
+		result = UpdateImage(*user.PictureId, image, contentType, fileName)
 	}
 	return
 }

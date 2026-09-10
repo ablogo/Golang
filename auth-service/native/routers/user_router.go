@@ -1,10 +1,12 @@
-package api
+package routers
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 
 	"src/models"
 	"src/services"
@@ -12,23 +14,20 @@ import (
 
 func GetUser(w http.ResponseWriter, r *http.Request) {
 
-	queryParams := r.URL.Query()
-	user_id, ok := strconv.Atoi(queryParams.Get("user_id"))
-	if ok != nil {
+	user_id, ok := r.Context().Value("userId").(int)
+	if !ok {
 		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
 
 	user := services.GetUser(user_id, []string{"Address"})
 	if user != nil {
-		jsonBytes, err := json.Marshal(user)
-		if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(user); err != nil {
+			http.Error(w, "", http.StatusUnprocessableEntity)
 			return
 		}
-
-		w.WriteHeader(http.StatusOK)
-		w.Write(jsonBytes)
-		return
 	} else {
 		http.Error(w, "", http.StatusNotFound)
 		return
@@ -37,9 +36,8 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
-	queryParams := r.URL.Query()
-	user_id, ok := strconv.Atoi(queryParams.Get("user_id"))
-	if ok != nil {
+	user_id, ok := r.Context().Value("userId").(int)
+	if !ok {
 		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
@@ -56,6 +54,12 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
 
+	user_id, ok := r.Context().Value("userId").(int)
+	if !ok {
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
+		return
+	}
+
 	var model models.User
 	defer r.Body.Close()
 
@@ -66,6 +70,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	model.Id = user_id
 	result := services.UpdateUser(model)
 	if result {
 		w.WriteHeader(http.StatusOK)
@@ -79,8 +84,8 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 func ChangePassword(w http.ResponseWriter, r *http.Request) {
 
 	queryParams := r.URL.Query()
-	user_id, ok := strconv.Atoi(queryParams.Get("user_id"))
-	if ok != nil {
+	user_id, ok := r.Context().Value("userId").(int)
+	if !ok {
 		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
@@ -88,11 +93,12 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 	password := queryParams.Get("password")
 	if password != "" {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
+		return
 	}
 
 	user := services.GetUser(user_id, nil)
 	if user == nil {
-		http.Error(w, "", http.StatusNotFound)
+		http.Error(w, "", http.StatusBadRequest)
 		return
 	}
 
@@ -101,7 +107,7 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		return
 	} else {
-		http.Error(w, "", http.StatusBadRequest)
+		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
 
@@ -109,16 +115,15 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 
 func AddPicture(w http.ResponseWriter, r *http.Request) {
 
-	queryParams := r.URL.Query()
-	user_id, ok := strconv.Atoi(queryParams.Get("user_id"))
-	if ok != nil {
+	user_id, ok := r.Context().Value("userId").(int)
+	if !ok {
 		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
 
 	user := services.GetUser(user_id, nil)
 	if user == nil {
-		http.Error(w, "", http.StatusNotFound)
+		http.Error(w, "", http.StatusBadRequest)
 		return
 	}
 
@@ -133,25 +138,32 @@ func AddPicture(w http.ResponseWriter, r *http.Request) {
 	result := services.AddPicture(user, fileBytes, header.Header["Content-Type"][0], header.Filename)
 	if result {
 		w.WriteHeader(http.StatusOK)
+		return
 	} else {
-		http.Error(w, "", http.StatusBadRequest)
+		http.Error(w, "", http.StatusInternalServerError)
+		return
 	}
 }
 
 func GetPicture(w http.ResponseWriter, r *http.Request) {
 
-	queryParams := r.URL.Query()
-	user_id, ok := strconv.Atoi(queryParams.Get("user_id"))
-	if ok != nil {
+	user_id, ok := r.Context().Value("userId").(int)
+	if !ok {
 		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
 
 	picture := services.GetImageByUser(user_id)
-	if picture != nil {
+	if picture.Picture != nil {
 		w.Header().Set("Content-Type", *picture.ContentType)
-		w.Header().Set("Content-Type", strconv.Itoa(len(*picture.Picture)))
-		w.Write(*picture.Picture)
+		w.Header().Set("Content-Length", strconv.Itoa(len(*picture.Picture)))
+		// Instruct browsers and CDNs to cache this asset
+		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+
+		// Wrap the byte array in a Reader so ServeContent can stream it
+		contentReader := bytes.NewReader(*picture.Picture)
+		// ServeContent automatically detects Content-Type from the filename extension
+		http.ServeContent(w, r, "", time.Now(), contentReader)
 		return
 	} else {
 		http.Error(w, "", http.StatusNotFound)
@@ -161,9 +173,8 @@ func GetPicture(w http.ResponseWriter, r *http.Request) {
 
 func AddAddress(w http.ResponseWriter, r *http.Request) {
 
-	queryParams := r.URL.Query()
-	user_id, ok := strconv.Atoi(queryParams.Get("user_id"))
-	if ok != nil {
+	user_id, ok := r.Context().Value("userId").(int)
+	if !ok {
 		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
@@ -183,44 +194,44 @@ func AddAddress(w http.ResponseWriter, r *http.Request) {
 	if result {
 		jsonBytes, err := json.Marshal(address)
 		if err != nil {
+			http.Error(w, "Address wrong parse", http.StatusInternalServerError)
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
 		w.Write(jsonBytes)
+		return
 	} else {
 		http.Error(w, "", http.StatusBadRequest)
+		return
 	}
 }
 
 func GetAddresses(w http.ResponseWriter, r *http.Request) {
 
-	queryParams := r.URL.Query()
-	user_id, ok := strconv.Atoi(queryParams.Get("user_id"))
-	if ok != nil {
+	user_id, ok := r.Context().Value("userId").(int)
+	if !ok {
 		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
 
 	addresses := services.GetAddressByUser(user_id)
 	if len(*addresses) > 0 {
-		jsonBytes, err := json.Marshal(addresses)
-		if err != nil {
+		if err := json.NewEncoder(w).Encode(addresses); err != nil {
+			http.Error(w, "", http.StatusUnprocessableEntity)
 			return
 		}
-
-		w.WriteHeader(http.StatusOK)
-		w.Write(jsonBytes)
 	} else {
 		http.Error(w, "", http.StatusBadRequest)
+		return
 	}
 }
 
 func DeleteAddress(w http.ResponseWriter, r *http.Request) {
 
 	queryParams := r.URL.Query()
-	user_id, ok := strconv.Atoi(queryParams.Get("user_id"))
-	if ok != nil {
+	user_id, ok := r.Context().Value("userId").(int)
+	if !ok {
 		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
@@ -237,24 +248,27 @@ func DeleteAddress(w http.ResponseWriter, r *http.Request) {
 		result := services.DeleteAddress(address_id)
 		if result {
 			w.WriteHeader(http.StatusOK)
+			return
 		} else {
 			http.Error(w, "Invalid token", http.StatusBadRequest)
+			return
 		}
 	} else {
 		http.Error(w, "Don't belong to the user", http.StatusNotAcceptable)
+		return
 	}
 }
 
 func UpdateAddress(w http.ResponseWriter, r *http.Request) {
-	var model models.Address
-	defer r.Body.Close()
 
-	queryParams := r.URL.Query()
-	user_id, ok := strconv.Atoi(queryParams.Get("user_id"))
-	if ok != nil {
+	user_id, ok := r.Context().Value("userId").(int)
+	if !ok {
 		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
 	}
+
+	var model models.Address
+	defer r.Body.Close()
 
 	decoder := json.NewDecoder(r.Body)
 
@@ -268,10 +282,13 @@ func UpdateAddress(w http.ResponseWriter, r *http.Request) {
 		result := services.UpdateAddress(model)
 		if result {
 			w.WriteHeader(http.StatusOK)
+			return
 		} else {
 			http.Error(w, "", http.StatusBadRequest)
+			return
 		}
 	} else {
 		http.Error(w, "Don't belong to the user", http.StatusNotAcceptable)
+		return
 	}
 }

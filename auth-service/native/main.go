@@ -8,14 +8,18 @@ import (
 	"syscall"
 	"time"
 
-	dependencies "native/dependency_injection"
+	"native/handlers"
+	"src/utils"
 )
 
 func main() {
 
 	fmt.Println(time.Now().UTC(), "Starting watcher.")
 
-	httpHandler := &dependencies.HttpHandler{}
+	settings := &utils.Settings{}
+	settings.GetInstance()
+
+	httpHandler := &handlers.HttpHandler{Settings: settings}
 
 	// Create context that listens for interrupt signals from the OS
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

@@ -1,4 +1,4 @@
-package dependencies
+package handlers
 
 import (
 	"context"
@@ -7,37 +7,39 @@ import (
 	"net/http"
 	"time"
 
-	"native/api"
-	"native/api/admin"
-	"src/services"
+	"native/middleware"
+	"native/routers"
+	"native/routers/admin"
+	"src/utils"
 )
 
 type HttpHandler struct {
-	Server *http.Server
+	Server   *http.Server
+	Settings *utils.Settings
 }
 
 func (h *HttpHandler) StartServer() {
 
 	mux := http.NewServeMux()
 
-	//mux.HandleFunc("GET /", api.GetUser)
+	//mux.HandleFunc("GET /", routers.GetUser)
 
 	{
-		mux.HandleFunc("POST /auth/sign-in", api.SignIn)
-		mux.HandleFunc("POST /auth/sign-up", api.SignUp)
-		mux.HandleFunc("POST /auth/validate-token", api.VerifyToken)
+		mux.HandleFunc("POST /auth/sign-in", routers.SignIn)
+		mux.HandleFunc("POST /auth/sign-up", routers.SignUp)
+		mux.HandleFunc("POST /auth/validate-token", routers.VerifyToken)
 	}
 	{
-		mux.HandleFunc("GET /user", api.GetUser)
-		mux.HandleFunc("PUT /user", api.UpdateUser)
-		mux.HandleFunc("POST /user/change-password", api.ChangePassword)
-		mux.HandleFunc("GET /user/img", api.GetPicture)
-		mux.HandleFunc("POST /user/img", api.AddPicture)
-		mux.HandleFunc("GET /user/address", api.GetAddresses)
-		mux.HandleFunc("POST /user/address", api.AddAddress)
-		mux.HandleFunc("DELETE /user/address", api.DeleteAddress)
-		mux.HandleFunc("PUT /user/address", api.UpdateAddress)
-		mux.HandleFunc("DELETE /user", api.DeleteUser)
+		mux.HandleFunc("GET /user", routers.GetUser)
+		mux.HandleFunc("PUT /user", routers.UpdateUser)
+		mux.HandleFunc("POST /user/change-password", routers.ChangePassword)
+		mux.HandleFunc("GET /user/img", routers.GetPicture)
+		mux.HandleFunc("POST /user/img", routers.AddPicture)
+		mux.HandleFunc("GET /user/address", routers.GetAddresses)
+		mux.HandleFunc("POST /user/address", routers.AddAddress)
+		mux.HandleFunc("DELETE /user/address", routers.DeleteAddress)
+		mux.HandleFunc("PUT /user/address", routers.UpdateAddress)
+		mux.HandleFunc("DELETE /user", routers.DeleteUser)
 	}
 	{
 		mux.HandleFunc("GET /admin/user", admin.GetUser)
@@ -46,10 +48,12 @@ func (h *HttpHandler) StartServer() {
 		mux.HandleFunc("GET /admin/user/address", admin.GetAddresses)
 	}
 
+	JWTMiddleware := middleware.JWTMiddleware(mux)
+
 	h.Server = &http.Server{
-		Addr:           ":" + services.GetServerPort(),
-		Handler:        mux,
-		ReadTimeout:    time.Second * 6,
+		Addr:           ":" + h.Settings.SERVER_PORT,
+		Handler:        JWTMiddleware,
+		ReadTimeout:    time.Second * 60,
 		WriteTimeout:   time.Second * 60,
 		IdleTimeout:    time.Second * 120,
 		MaxHeaderBytes: 1 << 20,
