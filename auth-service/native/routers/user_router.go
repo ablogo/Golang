@@ -1,18 +1,14 @@
 package routers
 
 import (
-	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
-	"strconv"
-	"time"
 
 	"src/models"
-	"src/services"
 )
 
-func GetUser(w http.ResponseWriter, r *http.Request) {
+func (u *Router) GetUser(w http.ResponseWriter, r *http.Request) {
 
 	user_id, ok := r.Context().Value("userId").(int)
 	if !ok {
@@ -20,7 +16,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := services.GetUser(user_id, []string{"Address"})
+	user := u.UserSvc.GetUser(user_id, []string{"Address"})
 	if user != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -34,7 +30,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func DeleteUser(w http.ResponseWriter, r *http.Request) {
+func (u *Router) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	user_id, ok := r.Context().Value("userId").(int)
 	if !ok {
@@ -42,7 +38,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := services.DeleteUser(user_id)
+	result := u.UserSvc.DeleteUser(user_id)
 	if result {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -52,7 +48,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func UpdateUser(w http.ResponseWriter, r *http.Request) {
+func (u *Router) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	user_id, ok := r.Context().Value("userId").(int)
 	if !ok {
@@ -71,7 +67,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	model.Id = user_id
-	result := services.UpdateUser(model)
+	result := u.UserSvc.UpdateUser(model)
 	if result {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -81,7 +77,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func ChangePassword(w http.ResponseWriter, r *http.Request) {
+func (u *Router) ChangePassword(w http.ResponseWriter, r *http.Request) {
 
 	queryParams := r.URL.Query()
 	user_id, ok := r.Context().Value("userId").(int)
@@ -96,13 +92,13 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := services.GetUser(user_id, nil)
+	user := u.UserSvc.GetUser(user_id, nil)
 	if user == nil {
 		http.Error(w, "", http.StatusBadRequest)
 		return
 	}
 
-	result := services.ChangePassword(user, password)
+	result := u.UserSvc.ChangePassword(user, password)
 	if result {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -113,7 +109,7 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func AddPicture(w http.ResponseWriter, r *http.Request) {
+func (u *Router) AddPicture(w http.ResponseWriter, r *http.Request) {
 
 	user_id, ok := r.Context().Value("userId").(int)
 	if !ok {
@@ -121,7 +117,7 @@ func AddPicture(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := services.GetUser(user_id, nil)
+	user := u.UserSvc.GetUser(user_id, nil)
 	if user == nil {
 		http.Error(w, "", http.StatusBadRequest)
 		return
@@ -135,7 +131,7 @@ func AddPicture(w http.ResponseWriter, r *http.Request) {
 
 	fileBytes, _ := io.ReadAll(file_form)
 
-	result := services.AddPicture(user, fileBytes, header.Header["Content-Type"][0], header.Filename)
+	result := u.UserSvc.AddPicture(user, fileBytes, header.Header["Content-Type"][0], header.Filename)
 	if result {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -145,9 +141,9 @@ func AddPicture(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetPicture(w http.ResponseWriter, r *http.Request) {
+func (u *Router) GetPicture(w http.ResponseWriter, r *http.Request) {
 
-	user_id, ok := r.Context().Value("userId").(int)
+	/*user_id, ok := r.Context().Value("userId").(int)
 	if !ok {
 		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
@@ -168,10 +164,10 @@ func GetPicture(w http.ResponseWriter, r *http.Request) {
 	} else {
 		http.Error(w, "", http.StatusNotFound)
 		return
-	}
+	}*/
 }
 
-func AddAddress(w http.ResponseWriter, r *http.Request) {
+func (u *Router) AddAddress(w http.ResponseWriter, r *http.Request) {
 
 	user_id, ok := r.Context().Value("userId").(int)
 	if !ok {
@@ -189,8 +185,8 @@ func AddAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := services.GetUser(user_id, nil)
-	address, result := services.AddAddress(user, model)
+	user := u.UserSvc.GetUser(user_id, nil)
+	address, result := u.UserSvc.AddAddress(user, model)
 	if result {
 		jsonBytes, err := json.Marshal(address)
 		if err != nil {
@@ -207,9 +203,9 @@ func AddAddress(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetAddresses(w http.ResponseWriter, r *http.Request) {
+func (u *Router) GetAddresses(w http.ResponseWriter, r *http.Request) {
 
-	user_id, ok := r.Context().Value("userId").(int)
+	/*user_id, ok := r.Context().Value("userId").(int)
 	if !ok {
 		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
@@ -224,12 +220,12 @@ func GetAddresses(w http.ResponseWriter, r *http.Request) {
 	} else {
 		http.Error(w, "", http.StatusBadRequest)
 		return
-	}
+	}*/
 }
 
-func DeleteAddress(w http.ResponseWriter, r *http.Request) {
+func (u *Router) DeleteAddress(w http.ResponseWriter, r *http.Request) {
 
-	queryParams := r.URL.Query()
+	/*queryParams := r.URL.Query()
 	user_id, ok := r.Context().Value("userId").(int)
 	if !ok {
 		http.Error(w, "Invalid token", http.StatusUnauthorized)
@@ -256,12 +252,12 @@ func DeleteAddress(w http.ResponseWriter, r *http.Request) {
 	} else {
 		http.Error(w, "Don't belong to the user", http.StatusNotAcceptable)
 		return
-	}
+	}*/
 }
 
-func UpdateAddress(w http.ResponseWriter, r *http.Request) {
+func (u *Router) UpdateAddress(w http.ResponseWriter, r *http.Request) {
 
-	user_id, ok := r.Context().Value("userId").(int)
+	/*user_id, ok := r.Context().Value("userId").(int)
 	if !ok {
 		http.Error(w, "Invalid token", http.StatusUnauthorized)
 		return
@@ -290,5 +286,5 @@ func UpdateAddress(w http.ResponseWriter, r *http.Request) {
 	} else {
 		http.Error(w, "Don't belong to the user", http.StatusNotAcceptable)
 		return
-	}
+	}*/
 }

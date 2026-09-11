@@ -14,7 +14,7 @@ Project Structure
 ----------
 ```text
 .
-├── code            # shared base code (services, models, db, etc)
+├── src             # shared base code (services, models, db, utils, etc)
 │
 ├── gin-framework   # REST API built using Gin and Gorm
 │
@@ -28,7 +28,7 @@ Project Structure
 How to use it
 -------------
 
-Running from the terminal located in the root folder "auth-service".
+Open a terminal in the root folder "auth-service".
 
 * Download the packages
 ```bash
@@ -43,5 +43,4 @@ go run ./native/main.go
 # gin project
 go run ./gin-framework/main.go
 ```
-
  

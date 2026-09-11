@@ -3,14 +3,13 @@ package services
 import (
 	database "src/db"
 	"src/models"
-	"src/utils"
 )
 
-var settings = &utils.Settings{}
-var dbHandler = &database.DBHandler{Settings: settings.GetInstance()}
-var db = dbHandler.InitDB()
+type UserService struct {
+	Postgres *database.DBHandler
+}
 
-func CreateUser(new_user models.SignUp) (result bool) {
+func (u *UserService) CreateUser(new_user models.SignUp) (result bool) {
 	user := models.User{
 		Name:     new_user.Name,
 		LastName: new_user.LastName,
@@ -18,7 +17,7 @@ func CreateUser(new_user models.SignUp) (result bool) {
 		Password: hashPassword(new_user.Password),
 	}
 
-	db_result := db.Create(&user)
+	db_result := u.Postgres.InitDB().Create(&user)
 
 	if db_result.Error == nil {
 		result = true
@@ -26,13 +25,13 @@ func CreateUser(new_user models.SignUp) (result bool) {
 	return
 }
 
-func GetUser(id int, dependencies []string) (user *models.User) {
+func (u *UserService) GetUser(id int, dependencies []string) (user *models.User) {
 	// To avoid repeating over and over "AND "users"."id" = 1", a new variable is used,
 	// because GORM mutates the query state due to the "db" is a global variable.
-	query := db
+	query := u.Postgres.InitDB()
 
 	for _, value := range dependencies {
-		query = db.Preload(value)
+		query = u.Postgres.InitDB().Preload(value)
 	}
 	err := query.Find(&user, id).Error
 	if err != nil {
@@ -41,17 +40,17 @@ func GetUser(id int, dependencies []string) (user *models.User) {
 	return
 }
 
-func GetUserByEmail(email string) (user *models.User) {
-	if result := db.First(&user, "email = ?", email); result.Error != nil {
+func (u *UserService) GetUserByEmail(email string) (user *models.User) {
+	if result := u.Postgres.InitDB().First(&user, "email = ?", email); result.Error != nil {
 		user = nil
 	}
 	return
 }
 
-func GetUsers() (users []models.User) {
+func (u *UserService) GetUsers() (users []models.User) {
 	users = []models.User{}
 
-	result := db.Find(&users)
+	result := u.Postgres.InitDB().Find(&users)
 
 	if result.Error != nil {
 		users = nil
@@ -59,8 +58,8 @@ func GetUsers() (users []models.User) {
 	return
 }
 
-func DeleteUser(id int) bool {
-	result := db.Delete(&models.User{}, &id)
+func (u *UserService) DeleteUser(id int) bool {
+	result := u.Postgres.InitDB().Delete(&models.User{}, &id)
 
 	if result.RowsAffected == 1 {
 		return true
@@ -69,8 +68,8 @@ func DeleteUser(id int) bool {
 	}
 }
 
-func UpdateUser(updated_user models.User) bool {
-	result := db.Model(&updated_user).Updates(models.User{
+func (u *UserService) UpdateUser(updated_user models.User) bool {
+	result := u.Postgres.InitDB().Model(&updated_user).Updates(models.User{
 		Name:     updated_user.Name,
 		LastName: updated_user.LastName,
 	})
@@ -82,8 +81,8 @@ func UpdateUser(updated_user models.User) bool {
 	}
 }
 
-func UpdateUserImage(updated_user models.User, pictureId int) bool {
-	result := db.Model(&updated_user).Updates(models.User{
+func (u *UserService) UpdateUserImage(updated_user models.User, pictureId int) bool {
+	result := u.Postgres.InitDB().Model(&updated_user).Updates(models.User{
 		PictureId: &pictureId,
 	})
 
@@ -94,9 +93,9 @@ func UpdateUserImage(updated_user models.User, pictureId int) bool {
 	}
 }
 
-func ChangePassword(user *models.User, password string) (result bool) {
+func (u *UserService) ChangePassword(user *models.User, password string) (result bool) {
 	if user != nil {
-		r := db.Model(&user).Update("password", hashPassword(password))
+		r := u.Postgres.InitDB().Model(&user).Update("password", hashPassword(password))
 
 		if r.Error == nil {
 			result = true
@@ -105,8 +104,8 @@ func ChangePassword(user *models.User, password string) (result bool) {
 	return
 }
 
-func DisableUser(user *models.User, value bool) bool {
-	result := db.Model(&user).Updates(map[string]any{"Disabled": value})
+func (u *UserService) DisableUser(user *models.User, value bool) bool {
+	result := u.Postgres.InitDB().Model(&user).Updates(map[string]any{"Disabled": value})
 
 	if result.RowsAffected == 1 {
 		return true
@@ -115,20 +114,20 @@ func DisableUser(user *models.User, value bool) bool {
 	}
 }
 
-func AddPicture(user *models.User, image []byte, contentType string, fileName string) (result bool) {
-	if user.PictureId == nil {
+func (u *UserService) AddPicture(user *models.User, image []byte, contentType string, fileName string) (result bool) {
+	/*if user.PictureId == nil {
 		picture_id, result := SaveImage(image, contentType, fileName)
 		if result {
-			result = UpdateUserImage(*user, picture_id)
+			result = u.UpdateUserImage(*user, picture_id)
 		}
 	} else {
 		result = UpdateImage(*user.PictureId, image, contentType, fileName)
-	}
+	}*/
 	return
 }
 
-func AddAddress(user *models.User, model models.Address) (address *models.Address, result bool) {
+func (u *UserService) AddAddress(user *models.User, model models.Address) (address *models.Address, result bool) {
 	model.UserId = user.Id
-	address, result = CreateAddress(model)
+	//address, result = CreateAddress(model)
 	return
 }

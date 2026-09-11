@@ -4,8 +4,8 @@ import (
 	"src/models"
 )
 
-func CreateAddress(model models.Address) (*models.Address, bool) {
-	db_result := db.Create(&model)
+func (u *UserService) CreateAddress(model models.Address) (*models.Address, bool) {
+	db_result := u.Postgres.InitDB().Create(&model)
 	if db_result.Error != nil {
 		return nil, false
 	}
@@ -13,26 +13,26 @@ func CreateAddress(model models.Address) (*models.Address, bool) {
 	return &model, true
 }
 
-func GetAddress(id int) (address *models.Address) {
-	db.First(&address, id)
+func (u *UserService) GetAddress(id int) (address *models.Address) {
+	u.Postgres.InitDB().First(&address, id)
 	return
 }
 
-func GetAddressByUser(user_id int) (address *[]models.Address) {
-	db.Where("user_id = ?", user_id).Find(&address)
+func (u *UserService) GetAddressByUser(user_id int) (address *[]models.Address) {
+	u.Postgres.InitDB().Where("user_id = ?", user_id).Find(&address)
 	return
 }
 
-func UpdateAddress(model models.Address) (result bool) {
-	r := db.Save(&model)
+func (u *UserService) UpdateAddress(model models.Address) (result bool) {
+	r := u.Postgres.InitDB().Save(&model)
 	if r.Error == nil {
 		result = true
 	}
 	return
 }
 
-func DeleteAddress(id int) bool {
-	r := db.Delete(models.Address{}, id)
+func (u *UserService) DeleteAddress(id int) bool {
+	r := u.Postgres.InitDB().Delete(models.Address{}, id)
 
 	if r.Error != nil {
 		return false

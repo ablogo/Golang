@@ -6,12 +6,11 @@ import (
 	"strconv"
 
 	"src/models"
-	"src/services"
 
 	"github.com/gin-gonic/gin"
 )
 
-func GetUser(c *gin.Context) {
+func (a *Router) GetUser(c *gin.Context) {
 
 	user_id, ok := c.MustGet("user_id").(int)
 	if !ok {
@@ -19,7 +18,7 @@ func GetUser(c *gin.Context) {
 		return
 	}
 
-	user := services.GetUser(user_id, []string{"Address"})
+	user := a.UserSvc.GetUser(user_id, []string{"Address"})
 	if user != nil {
 		c.JSON(http.StatusOK, user)
 		return
@@ -29,7 +28,7 @@ func GetUser(c *gin.Context) {
 	}
 }
 
-func DeleteUser(c *gin.Context) {
+func (a *Router) DeleteUser(c *gin.Context) {
 
 	user_id, ok := c.MustGet("user_id").(int)
 	if !ok {
@@ -37,7 +36,7 @@ func DeleteUser(c *gin.Context) {
 		return
 	}
 
-	result := services.DeleteUser(user_id)
+	result := a.UserSvc.DeleteUser(user_id)
 	if result {
 		c.JSON(http.StatusOK, http.NoBody)
 		return
@@ -47,7 +46,7 @@ func DeleteUser(c *gin.Context) {
 	}
 }
 
-func UpdateUser(c *gin.Context) {
+func (a *Router) UpdateUser(c *gin.Context) {
 
 	var model models.User
 
@@ -56,7 +55,7 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
-	result := services.UpdateUser(model)
+	result := a.UserSvc.UpdateUser(model)
 	if result {
 		c.JSON(http.StatusOK, http.NoBody)
 		return
@@ -66,7 +65,7 @@ func UpdateUser(c *gin.Context) {
 	}
 }
 
-func ChangePassword(c *gin.Context) {
+func (a *Router) ChangePassword(c *gin.Context) {
 
 	user_id, ok := c.MustGet("user_id").(int)
 	if !ok {
@@ -79,13 +78,13 @@ func ChangePassword(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, struct{ message string }{message: "Invalid input"})
 	}
 
-	user := services.GetUser(user_id, nil)
+	user := a.UserSvc.GetUser(user_id, nil)
 	if user == nil {
 		c.JSON(http.StatusNotFound, http.NoBody)
 		return
 	}
 
-	result := services.ChangePassword(user, password)
+	result := a.UserSvc.ChangePassword(user, password)
 	if result {
 		c.JSON(http.StatusOK, http.NoBody)
 		return
@@ -96,7 +95,7 @@ func ChangePassword(c *gin.Context) {
 
 }
 
-func AddPicture(c *gin.Context) {
+func (a *Router) AddPicture(c *gin.Context) {
 
 	user_id, ok := c.MustGet("user_id").(int)
 	if !ok {
@@ -104,7 +103,7 @@ func AddPicture(c *gin.Context) {
 		return
 	}
 
-	user := services.GetUser(user_id, nil)
+	user := a.UserSvc.GetUser(user_id, nil)
 	if user == nil {
 		c.JSON(http.StatusNotFound, http.NoBody)
 		return
@@ -120,7 +119,7 @@ func AddPicture(c *gin.Context) {
 	defer file.Close()
 	fileBytes, _ := io.ReadAll(file)
 
-	result := services.AddPicture(user, fileBytes, file_form.Header["Content-Type"][0], file_form.Filename)
+	result := a.UserSvc.AddPicture(user, fileBytes, file_form.Header["Content-Type"][0], file_form.Filename)
 	if result {
 		c.JSON(http.StatusOK, http.NoBody)
 	} else {
@@ -128,14 +127,14 @@ func AddPicture(c *gin.Context) {
 	}
 }
 
-func GetPicture(c *gin.Context) {
+func (a *Router) GetPicture(c *gin.Context) {
 	user_id, ok := c.MustGet("user_id").(int)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 		return
 	}
 
-	picture := services.GetImageByUser(user_id)
+	picture := a.UserSvc.GetImageByUser(user_id)
 	if picture != nil {
 		c.Data(http.StatusOK, *picture.ContentType, *picture.Picture)
 		return
@@ -145,7 +144,7 @@ func GetPicture(c *gin.Context) {
 	}
 }
 
-func AddAddress(c *gin.Context) {
+func (a *Router) AddAddress(c *gin.Context) {
 
 	user_id, ok := c.MustGet("user_id").(int)
 	if !ok {
@@ -159,8 +158,8 @@ func AddAddress(c *gin.Context) {
 		return
 	}
 
-	user := services.GetUser(user_id, nil)
-	address, result := services.AddAddress(user, model)
+	user := a.UserSvc.GetUser(user_id, nil)
+	address, result := a.UserSvc.AddAddress(user, model)
 	if result {
 		c.JSON(http.StatusOK, address)
 	} else {
@@ -168,7 +167,7 @@ func AddAddress(c *gin.Context) {
 	}
 }
 
-func GetAddresses(c *gin.Context) {
+func (a *Router) GetAddresses(c *gin.Context) {
 
 	user_id, ok := c.MustGet("user_id").(int)
 	if !ok {
@@ -176,7 +175,7 @@ func GetAddresses(c *gin.Context) {
 		return
 	}
 
-	addresses := services.GetAddressByUser(user_id)
+	addresses := a.UserSvc.GetAddressByUser(user_id)
 	if len(*addresses) > 0 {
 		c.JSON(http.StatusOK, addresses)
 	} else {
@@ -184,7 +183,7 @@ func GetAddresses(c *gin.Context) {
 	}
 }
 
-func DeleteAddress(c *gin.Context) {
+func (a *Router) DeleteAddress(c *gin.Context) {
 
 	user_id, ok := c.MustGet("user_id").(int)
 	if !ok {
@@ -198,10 +197,10 @@ func DeleteAddress(c *gin.Context) {
 		return
 	}
 
-	address := services.GetAddress(address_id)
+	address := a.UserSvc.GetAddress(address_id)
 	if address.UserId == user_id {
 
-		result := services.DeleteAddress(address_id)
+		result := a.UserSvc.DeleteAddress(address_id)
 		if result {
 			c.JSON(http.StatusOK, http.StatusOK)
 		} else {
@@ -212,7 +211,7 @@ func DeleteAddress(c *gin.Context) {
 	}
 }
 
-func UpdateAddress(c *gin.Context) {
+func (a *Router) UpdateAddress(c *gin.Context) {
 	var model models.Address
 
 	user_id, ok := c.MustGet("user_id").(int)
@@ -228,7 +227,7 @@ func UpdateAddress(c *gin.Context) {
 
 	if model.UserId == user_id {
 
-		result := services.UpdateAddress(model)
+		result := a.UserSvc.UpdateAddress(model)
 		if result {
 			c.JSON(http.StatusOK, http.NoBody)
 		} else {

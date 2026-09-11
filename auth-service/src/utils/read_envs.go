@@ -9,12 +9,20 @@ import (
 )
 
 type Settings struct {
-	DB_HOST     string
-	DB_NAME     string
-	DB_USER     string
-	DB_PASSWORD string
-	DB_PORT     string
-	SERVER_PORT string
+	DB_HOST              string
+	DB_NAME              string
+	DB_USER              string
+	DB_PASSWORD          string
+	DB_PORT              string
+	SERVER_PORT          string
+	SERVER_READ_TIMEOUT  int
+	SERVER_WRITE_TIMEOUT int
+	SERVER_IDLE_TIMEOUT  int
+	SERVER_MAX_HEADER    int
+	JWT_SECRET_TOKEN     string
+	JWT_ALGORITHM        string
+	JWT_EXPIRE_MINUTES   string
+	CORS_ALLOWED_HOSTS   string
 }
 
 var instance *Settings
@@ -38,7 +46,7 @@ func getEnvVariable(name string, defaultValue string) string {
 	return value
 }
 
-func getEnvVariableNumber(name string, defaultValue int) string {
+func getNumberEnvVariableAsString(name string, defaultValue int) string {
 	value, err := strconv.Atoi(os.Getenv(name))
 	if err != nil {
 		return strconv.Itoa(defaultValue)
@@ -46,13 +54,24 @@ func getEnvVariableNumber(name string, defaultValue int) string {
 	return strconv.Itoa(value)
 }
 
+func getNumberEnvVariable(name string, defaultValue int) int {
+	value, err := strconv.Atoi(os.Getenv(name))
+	if err != nil {
+		return defaultValue
+	}
+	return value
+}
+
 func (s *Settings) GetValues() {
 	godotenv.Load("../.env")
 
-	s.SERVER_PORT = getEnvVariableNumber("SERVER_PORT", 8000)
+	s.SERVER_PORT = getNumberEnvVariableAsString("SERVER_PORT", 8000)
+	s.SERVER_READ_TIMEOUT = getNumberEnvVariable("SERVER_READ_TIMEOUT", 60)
+	s.SERVER_WRITE_TIMEOUT = getNumberEnvVariable("SERVER_WRITE_TIMEOUT", 60)
+	s.SERVER_IDLE_TIMEOUT = getNumberEnvVariable("SERVER_IDLE_TIMEOUT", 120)
 	s.DB_HOST = getEnvVariable("DB_HOST", "localhost")
 	s.DB_NAME = getEnvVariable("DB_NAME", "auth-service")
 	s.DB_USER = getEnvVariable("DB_USER", "")
 	s.DB_PASSWORD = getEnvVariable("DB_PASSWORD", "")
-	s.DB_PORT = getEnvVariableNumber("DB_PORT", 5432)
+	s.DB_PORT = getNumberEnvVariableAsString("DB_PORT", 5432)
 }

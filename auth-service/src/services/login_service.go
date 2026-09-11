@@ -2,9 +2,9 @@ package services
 
 import "src/models"
 
-func Login(email string, password string) (token string) {
+func (u *UserService) Login(email string, password string) (token string) {
 
-	user := GetUserByEmail(email)
+	user := u.GetUserByEmail(email)
 
 	if user != nil {
 

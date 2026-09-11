@@ -8,7 +8,11 @@ import (
 	"src/services"
 )
 
-func SignUp(w http.ResponseWriter, r *http.Request) {
+type Router struct {
+	UserSvc *services.UserService
+}
+
+func (a *Router) SignUp(w http.ResponseWriter, r *http.Request) {
 	var model models.SignUp
 	defer r.Body.Close()
 
@@ -20,7 +24,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := services.CreateUser(model)
+	result := a.UserSvc.CreateUser(model)
 
 	if result {
 		w.WriteHeader(http.StatusOK)
@@ -31,7 +35,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func SignIn(w http.ResponseWriter, r *http.Request) {
+func (a *Router) SignIn(w http.ResponseWriter, r *http.Request) {
 	var model models.SignIn
 
 	err := r.ParseForm()
@@ -43,7 +47,7 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 	model.UserName = r.FormValue("username")
 	model.Password = r.FormValue("password")
 
-	token := services.Login(model.UserName, model.Password)
+	token := a.UserSvc.Login(model.UserName, model.Password)
 
 	if token != "" {
 		w.WriteHeader(http.StatusOK)

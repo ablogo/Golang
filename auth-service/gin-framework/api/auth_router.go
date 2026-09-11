@@ -9,7 +9,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SignUp(c *gin.Context) {
+type Router struct {
+	UserSvc *services.UserService
+}
+
+func (a *Router) SignUp(c *gin.Context) {
 	var model models.SignUp
 
 	if err := c.ShouldBindJSON(&model); err != nil {
@@ -17,7 +21,7 @@ func SignUp(c *gin.Context) {
 		return
 	}
 
-	result := services.CreateUser(model)
+	result := a.UserSvc.CreateUser(model)
 
 	if result {
 		c.JSON(http.StatusOK, http.NoBody)
@@ -28,7 +32,7 @@ func SignUp(c *gin.Context) {
 	}
 }
 
-func SignIn(c *gin.Context) {
+func (a *Router) SignIn(c *gin.Context) {
 	var model models.SignIn
 
 	if err := c.ShouldBind(&model); err != nil {
@@ -36,7 +40,7 @@ func SignIn(c *gin.Context) {
 		return
 	}
 
-	token := services.Login(model.UserName, model.Password)
+	token := a.UserSvc.Login(model.UserName, model.Password)
 
 	if token != "" {
 		c.JSON(http.StatusOK, models.Token{AccessToken: token, TokenType: "bearer"})
