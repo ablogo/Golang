@@ -1,4 +1,4 @@
-package admin
+package api
 
 import (
 	"net/http"
@@ -10,7 +10,11 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GetUser(c *gin.Context) {
+type AdminRouter struct {
+	UserSvc *services.UserService
+}
+
+func (s *AdminRouter) GetUser(c *gin.Context) {
 
 	user_email := c.Query("email")
 	if user_email == "" {
@@ -18,7 +22,7 @@ func GetUser(c *gin.Context) {
 		return
 	}
 
-	user := services.GetUserByEmail(user_email)
+	user := s.UserSvc.GetUserByEmail(user_email)
 	if user != nil {
 		c.JSON(http.StatusOK, user)
 		return
@@ -28,9 +32,9 @@ func GetUser(c *gin.Context) {
 	}
 }
 
-func GetUsers(c *gin.Context) {
+func (s *AdminRouter) GetUsers(c *gin.Context) {
 
-	users := services.GetUsers()
+	users := s.UserSvc.GetUsers()
 
 	if users != nil {
 		c.JSON(http.StatusOK, users)
@@ -41,7 +45,7 @@ func GetUsers(c *gin.Context) {
 	}
 }
 
-func DeleteUser(c *gin.Context) {
+func (s *AdminRouter) DeleteUser(c *gin.Context) {
 
 	user_email := c.Query("email")
 	if user_email == "" {
@@ -49,13 +53,13 @@ func DeleteUser(c *gin.Context) {
 		return
 	}
 
-	user := services.GetUserByEmail(user_email)
+	user := s.UserSvc.GetUserByEmail(user_email)
 	if user == nil {
 		c.JSON(http.StatusNotFound, struct{ message string }{message: "Not found"})
 		return
 	}
 
-	result := services.DeleteUser(user.Id)
+	result := s.UserSvc.DeleteUser(user.Id)
 	if result {
 		c.JSON(http.StatusOK, http.NoBody)
 		return
@@ -65,7 +69,7 @@ func DeleteUser(c *gin.Context) {
 	}
 }
 
-func UpdateUser(c *gin.Context) {
+func (s *AdminRouter) UpdateUser(c *gin.Context) {
 
 	var model models.User
 
@@ -74,7 +78,7 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
-	result := services.UpdateUser(model)
+	result := s.UserSvc.UpdateUser(model)
 	if result {
 		c.JSON(http.StatusOK, http.NoBody)
 		return
@@ -85,7 +89,7 @@ func UpdateUser(c *gin.Context) {
 
 }
 
-func ChangePassword(c *gin.Context) {
+func (s *AdminRouter) ChangePassword(c *gin.Context) {
 
 	user_email := c.Query("email")
 	if user_email == "" {
@@ -98,13 +102,13 @@ func ChangePassword(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, struct{ message string }{message: "Invalid input"})
 	}
 
-	user := services.GetUserByEmail(user_email)
+	user := s.UserSvc.GetUserByEmail(user_email)
 	if user != nil {
 		c.JSON(http.StatusNotFound, http.NoBody)
 		return
 	}
 
-	result := services.ChangePassword(user, password)
+	result := s.UserSvc.ChangePassword(user, password)
 	if result {
 		c.JSON(http.StatusOK, http.NoBody)
 		return
@@ -115,7 +119,7 @@ func ChangePassword(c *gin.Context) {
 
 }
 
-func AddAddress(c *gin.Context) {
+func (s *AdminRouter) AddAddress(c *gin.Context) {
 
 	var model models.Address
 
@@ -130,13 +134,13 @@ func AddAddress(c *gin.Context) {
 		return
 	}
 
-	user := services.GetUserByEmail(user_email)
+	user := s.UserSvc.GetUserByEmail(user_email)
 	if user == nil {
 		c.JSON(http.StatusNotFound, struct{ message string }{message: "User not found"})
 		return
 	}
 
-	address, result := services.AddAddress(user, model)
+	address, result := s.UserSvc.AddAddress(user, model)
 	if result {
 		c.JSON(http.StatusOK, address)
 	} else {
@@ -144,7 +148,7 @@ func AddAddress(c *gin.Context) {
 	}
 }
 
-func GetAddresses(c *gin.Context) {
+func (s *AdminRouter) GetAddresses(c *gin.Context) {
 
 	user_email := c.Query("email")
 	if user_email == "" {
@@ -152,13 +156,13 @@ func GetAddresses(c *gin.Context) {
 		return
 	}
 
-	user := services.GetUserByEmail(user_email)
+	user := s.UserSvc.GetUserByEmail(user_email)
 	if user == nil {
 		c.JSON(http.StatusNotFound, struct{ message string }{message: "Not found"})
 		return
 	}
 
-	addresses := services.GetAddressByUser(user.Id)
+	addresses := s.UserSvc.GetAddressByUser(user.Id)
 	if len(*addresses) > 0 {
 		c.JSON(http.StatusOK, addresses)
 	} else {
@@ -166,7 +170,7 @@ func GetAddresses(c *gin.Context) {
 	}
 }
 
-func DeleteAddress(c *gin.Context) {
+func (s *AdminRouter) DeleteAddress(c *gin.Context) {
 
 	user_email := c.Query("email")
 	if user_email == "" {
@@ -180,16 +184,16 @@ func DeleteAddress(c *gin.Context) {
 		return
 	}
 
-	user := services.GetUserByEmail(user_email)
+	user := s.UserSvc.GetUserByEmail(user_email)
 	if user == nil {
 		c.JSON(http.StatusNotFound, struct{ message string }{message: "Not found"})
 		return
 	}
 
-	address := services.GetAddress(address_id)
+	address := s.UserSvc.GetAddress(address_id)
 	if address.UserId == user.Id {
 
-		result := services.DeleteAddress(address_id)
+		result := s.UserSvc.DeleteAddress(address_id)
 		if result {
 			c.JSON(http.StatusOK, http.StatusOK)
 		} else {
@@ -201,7 +205,7 @@ func DeleteAddress(c *gin.Context) {
 	}
 }
 
-func UpdateAddress(c *gin.Context) {
+func (s *AdminRouter) UpdateAddress(c *gin.Context) {
 	var model models.Address
 
 	user_email := c.Query("email")
@@ -215,7 +219,7 @@ func UpdateAddress(c *gin.Context) {
 		return
 	}
 
-	user := services.GetUserByEmail(user_email)
+	user := s.UserSvc.GetUserByEmail(user_email)
 	if user == nil {
 		c.JSON(http.StatusNotFound, struct{ message string }{message: "Not found"})
 		return
@@ -223,7 +227,7 @@ func UpdateAddress(c *gin.Context) {
 
 	if model.UserId == user.Id {
 
-		result := services.UpdateAddress(model)
+		result := s.UserSvc.UpdateAddress(model)
 		if result {
 			c.JSON(http.StatusOK, http.NoBody)
 		} else {

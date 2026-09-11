@@ -9,6 +9,9 @@ import (
 	"time"
 
 	"native/handlers"
+	"native/routers"
+	database "src/db"
+	"src/services"
 	"src/utils"
 )
 
@@ -18,8 +21,16 @@ func main() {
 
 	settings := &utils.Settings{}
 	settings.GetInstance()
+	postgresHandler := &database.DBHandler{Settings: settings}
+	userSvc := &services.UserService{Postgres: postgresHandler}
+	authRouter := &routers.Router{UserSvc: userSvc}
+	adminRouter := &routers.AdminRouter{UserSvc: userSvc}
 
-	httpHandler := &handlers.HttpHandler{Settings: settings}
+	httpHandler := &handlers.HttpHandler{
+		Settings:    settings,
+		Router:      authRouter,
+		AdminRouter: adminRouter,
+	}
 
 	// Create context that listens for interrupt signals from the OS
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

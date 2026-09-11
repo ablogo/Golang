@@ -1,4 +1,4 @@
-package admin
+package routers
 
 import (
 	"encoding/json"
@@ -9,7 +9,11 @@ import (
 	"src/services"
 )
 
-func GetUser(w http.ResponseWriter, r *http.Request) {
+type AdminRouter struct {
+	UserSvc *services.UserService
+}
+
+func (s *AdminRouter) GetUser(w http.ResponseWriter, r *http.Request) {
 
 	queryParams := r.URL.Query()
 
@@ -19,7 +23,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := services.GetUserByEmail(user_email)
+	user := s.UserSvc.GetUserByEmail(user_email)
 	if user != nil {
 		json.NewEncoder(w).Encode(user)
 		return
@@ -29,9 +33,9 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetUsers(w http.ResponseWriter, r *http.Request) {
+func (s *AdminRouter) GetUsers(w http.ResponseWriter, r *http.Request) {
 
-	users := services.GetUsers()
+	users := s.UserSvc.GetUsers()
 
 	if users != nil {
 		json.NewEncoder(w).Encode(users)
@@ -42,7 +46,7 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func DeleteUser(w http.ResponseWriter, r *http.Request) {
+func (s *AdminRouter) DeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	queryParams := r.URL.Query()
 
@@ -52,13 +56,13 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := services.GetUserByEmail(user_email)
+	user := s.UserSvc.GetUserByEmail(user_email)
 	if user == nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	result := services.DeleteUser(user.Id)
+	result := s.UserSvc.DeleteUser(user.Id)
 	if result {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -68,7 +72,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func UpdateUser(w http.ResponseWriter, r *http.Request) {
+func (s *AdminRouter) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	var model models.User
 	defer r.Body.Close()
@@ -79,7 +83,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := services.UpdateUser(model)
+	result := s.UserSvc.UpdateUser(model)
 	if result {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -90,7 +94,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func ChangePassword(w http.ResponseWriter, r *http.Request) {
+func (s *AdminRouter) ChangePassword(w http.ResponseWriter, r *http.Request) {
 
 	queryParams := r.URL.Query()
 
@@ -106,13 +110,13 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := services.GetUserByEmail(user_email)
+	user := s.UserSvc.GetUserByEmail(user_email)
 	if user != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	result := services.ChangePassword(user, password)
+	result := s.UserSvc.ChangePassword(user, password)
 	if result {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -123,7 +127,7 @@ func ChangePassword(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func AddAddress(w http.ResponseWriter, r *http.Request) {
+func (s *AdminRouter) AddAddress(w http.ResponseWriter, r *http.Request) {
 
 	var model models.Address
 	defer r.Body.Close()
@@ -142,13 +146,13 @@ func AddAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := services.GetUserByEmail(user_email)
+	user := s.UserSvc.GetUserByEmail(user_email)
 	if user == nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	address, result := services.AddAddress(user, model)
+	address, result := s.UserSvc.AddAddress(user, model)
 	if result {
 		json.NewEncoder(w).Encode(address)
 	} else {
@@ -156,7 +160,7 @@ func AddAddress(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func GetAddresses(w http.ResponseWriter, r *http.Request) {
+func (s *AdminRouter) GetAddresses(w http.ResponseWriter, r *http.Request) {
 
 	queryParams := r.URL.Query()
 
@@ -166,13 +170,13 @@ func GetAddresses(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := services.GetUserByEmail(user_email)
+	user := s.UserSvc.GetUserByEmail(user_email)
 	if user == nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	addresses := services.GetAddressByUser(user.Id)
+	addresses := s.UserSvc.GetAddressByUser(user.Id)
 	if len(*addresses) > 0 {
 		json.NewEncoder(w).Encode(addresses)
 	} else {
@@ -180,7 +184,7 @@ func GetAddresses(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func DeleteAddress(w http.ResponseWriter, r *http.Request) {
+func (s *AdminRouter) DeleteAddress(w http.ResponseWriter, r *http.Request) {
 
 	queryParams := r.URL.Query()
 
@@ -196,16 +200,16 @@ func DeleteAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := services.GetUserByEmail(user_email)
+	user := s.UserSvc.GetUserByEmail(user_email)
 	if user == nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	address := services.GetAddress(address_id)
+	address := s.UserSvc.GetAddress(address_id)
 	if address.UserId == user.Id {
 
-		result := services.DeleteAddress(address_id)
+		result := s.UserSvc.DeleteAddress(address_id)
 		if result {
 			w.WriteHeader(http.StatusOK)
 		} else {
@@ -217,7 +221,7 @@ func DeleteAddress(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func UpdateAddress(w http.ResponseWriter, r *http.Request) {
+func (s *AdminRouter) UpdateAddress(w http.ResponseWriter, r *http.Request) {
 	var model models.Address
 	defer r.Body.Close()
 
@@ -235,7 +239,7 @@ func UpdateAddress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := services.GetUserByEmail(user_email)
+	user := s.UserSvc.GetUserByEmail(user_email)
 	if user == nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -243,7 +247,7 @@ func UpdateAddress(w http.ResponseWriter, r *http.Request) {
 
 	if model.UserId == user.Id {
 
-		result := services.UpdateAddress(model)
+		result := s.UserSvc.UpdateAddress(model)
 		if result {
 			w.WriteHeader(http.StatusOK)
 		} else {

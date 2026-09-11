@@ -2,9 +2,11 @@ package main
 
 import (
 	"net/http"
+	database "src/db"
+	"src/services"
+	"src/utils"
 
 	"gin-framework/api"
-	"gin-framework/api/admin"
 	"gin-framework/middlewares"
 
 	"github.com/gin-contrib/cors"
@@ -12,6 +14,13 @@ import (
 )
 
 func main() {
+	settings := &utils.Settings{}
+	settings.GetInstance()
+	postgresHandler := &database.DBHandler{Settings: settings}
+	userSvc := &services.UserService{Postgres: postgresHandler}
+	routerHandler := &api.Router{UserSvc: userSvc}
+	adminRouterHandler := &api.AdminRouter{UserSvc: userSvc}
+
 	router := gin.Default()
 	//router.Use(middlewares.JWTMiddleware())
 	config := cors.DefaultConfig()
@@ -26,29 +35,29 @@ func main() {
 
 	{
 		auth_router := router.Group("/auth")
-		auth_router.POST("/sign-up", api.SignUp)
-		auth_router.POST("/sign-in", api.SignIn)
+		auth_router.POST("/sign-up", routerHandler.SignUp)
+		auth_router.POST("/sign-in", routerHandler.SignIn)
 		auth_router.POST("/validate-token", middlewares.JWTMiddleware(), api.VerifyToken)
 	}
 	{
 		user_router := router.Group("/user", middlewares.JWTMiddleware())
-		user_router.GET("/", api.GetUser)
-		user_router.PUT("/user", api.UpdateUser)
-		user_router.POST("/change-password", api.ChangePassword)
-		user_router.GET("/img", api.GetPicture)
-		user_router.POST("/img", api.AddPicture)
-		user_router.GET("/address", api.GetAddresses)
-		user_router.POST("/address", api.AddAddress)
-		user_router.DELETE("/address", api.DeleteAddress)
-		user_router.PUT("/address", api.UpdateAddress)
-		user_router.DELETE("/user", api.DeleteUser)
+		user_router.GET("/", routerHandler.GetUser)
+		user_router.PUT("/user", routerHandler.UpdateUser)
+		user_router.POST("/change-password", routerHandler.ChangePassword)
+		user_router.GET("/img", routerHandler.GetPicture)
+		user_router.POST("/img", routerHandler.AddPicture)
+		user_router.GET("/address", routerHandler.GetAddresses)
+		user_router.POST("/address", routerHandler.AddAddress)
+		user_router.DELETE("/address", routerHandler.DeleteAddress)
+		user_router.PUT("/address", routerHandler.UpdateAddress)
+		user_router.DELETE("/user", routerHandler.DeleteUser)
 	}
 	{
 		admin_router := router.Group("/admin", middlewares.JWTMiddleware())
-		admin_router.GET("/user", admin.GetUser)
-		admin_router.GET("/users", admin.GetUsers)
-		admin_router.DELETE("/user", admin.DeleteUser)
-		admin_router.GET("/user/address", admin.GetAddresses)
+		admin_router.GET("/user", adminRouterHandler.GetUser)
+		admin_router.GET("/users", adminRouterHandler.GetUsers)
+		admin_router.DELETE("/user", adminRouterHandler.DeleteUser)
+		admin_router.GET("/user/address", adminRouterHandler.GetAddresses)
 	}
 
 	router.Run("localhost:8000")

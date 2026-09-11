@@ -11,22 +11,22 @@ import (
 
 func JWTMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		/*if strings.Contains(ctx.Request.URL.Path, "auth") {
+		if strings.Contains(ctx.Request.URL.Path, "auth") {
 			ctx.Next()
 			return
-		}*/
+		}
 
-		token_header := ctx.GetHeader("Authorization")
-		token := strings.Split(token_header, " ")
-		if len(token) <= 1 || token[1] == "" {
+		tokenHeader := ctx.GetHeader("Authorization")
+		token := strings.Split(tokenHeader, " ")
+		if len(token) <= 1 || strings.ToLower(token[0]) != "bearer" {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Token is required"})
 			ctx.Abort()
 			return
 		}
 
-		user_id, is_valid := services.ValidateToken(token[1])
-		if is_valid {
-			ctx.Set("user_id", user_id)
+		userId, isValid := services.ValidateToken(token[1])
+		if isValid {
+			ctx.Set("user_id", userId)
 		} else {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			ctx.Abort()

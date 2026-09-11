@@ -9,9 +9,6 @@ import (
 )
 
 func JWTMiddleware(next http.Handler) http.Handler {
-	type userKey string
-	const userIdKey userKey = "userId"
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		isLogin := strings.Contains(r.RequestURI, "auth")
 		if isLogin {
