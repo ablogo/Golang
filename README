@@ -1,0 +1,13 @@
+Golang
+-------
+This repository is using to explore and learn Golang language.
+
+
+Projects
+---------
+
+* auth-service: Microservice using for user administration and athentication.
+
+* basics: Scripts doing simple things
+
+* watcher: Program running as a daemon to verify and notify if something is not working/running properly or if any file in a list was modified
