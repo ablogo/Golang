@@ -35,9 +35,9 @@ func (h *HttpHandler) StartServer() {
 	h.Server = &http.Server{
 		Addr:         ":" + h.Settings.SERVER_PORT,
 		Handler:      mux,
-		ReadTimeout:  time.Second * 6,
-		WriteTimeout: time.Second * 45,
-		IdleTimeout:  time.Second * 120,
+		ReadTimeout:  time.Second * h.Server.ReadTimeout,
+		WriteTimeout: time.Second * h.Server.WriteTimeout,
+		IdleTimeout:  time.Second * h.Server.IdleTimeout,
 	}
 
 	slog.Info("Starting server on port " + h.Server.Addr)
