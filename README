@@ -10,4 +10,6 @@ Projects
 
 * basics: scripts doing simple things
 
-* watcher: program running as a daemon to verify and notify if something is not working/running properly or if any file in a list was modified
+* watcher: program to verify and notify if a website and k8s cluster is not working/running properly or if any file in a list was modified (running as a daemon)
+
+* product-tracking: program to track product prices on websites (running as a daemon)
