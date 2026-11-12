@@ -1,0 +1,82 @@
+Product Track
+--------------
+Program that track prices on websites, using a headless browser. To automate the program, it can be installed as a daemon service in Linux enviroments.
+
+Requirements
+-------------
+ - Golang 1.25.6
+ - Postgresql Database
+ - Golang package go-rod/rod 0.116.2
+ - Browser (Chrome, Edge, Opera, FireFox)
+
+How to use it
+--------------
+1. Compile the source code to obtain a single standalone executable binary.
+```bash
+go build .
+```
+
+2. Run the executable binary
+```bash
+go run product-tracking
+```
+
+How to install as a daemon service
+------------------------------------
+1. Move the .env file and the binary generated on the previous statement to a dedicated path.
+```bash
+mkdir /ptrack
+mv product-tracking /ptrack/
+mv .env /ptrack/
+```
+
+2. Create a file in the path "/etc/systemd/system/" with the following content.
+
+```bash
+# file name product-track.service
+[Unit]
+Description=track online product prices
+After=network-online.target
+
+[Service]
+Type=simple
+User={os_user}
+WorkingDirectory=/ptrack/
+ExecStart=/ptrack/product-tracking
+Restart=on-failure
+RestartSec=60
+StandardOutput=append:/ptrack/ptrack.log
+StandardError=append:/ptrack/ptrack.log
+
+#Grant permission to low ports withput root user
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE CAP_DAC_OVERRIDE
+AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_DAC_OVERRIDE CAP_DAC_READ_SEARCH CAP_CHOWN CAP_FOWNER CAP_SYS_CHROOT CAP_SYS_PTRACE CAP_SYS_ADMIN
+
+[Install]
+WantedBy=multi-user.target
+```
+
+3. Create and run the new daemon service
+```bash
+sudo systemctl enable product-track.service
+sudo systemctl daemon-reload
+sudo systemctl start product-track.service
+```
+
+4. Verify the status of the new service
+```bash
+sudo systemctl status product-track.service
+```
+
+Things to consider
+-------------------
+On most Linux distros, apt install chromium installs a snap wrapper, not a real browser. Install Google Chrome directly from its binaries.
+```bash
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo dpkg -i google-chrome-stable_current_amd64.deb
+sudo apt --fix-broken install -y
+```
+Or
+``` bash
+sudo apt install ./google-chrome-stable_current_amd64.deb
+```
