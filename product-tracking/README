@@ -17,6 +17,7 @@ go build .
 ```
 
 2. Run the executable binary
+(before running it is necessary to complete the configuration file(.env), and place it in the root folder)
 ```bash
 go run product-tracking
 ```
@@ -79,4 +80,28 @@ sudo apt --fix-broken install -y
 Or
 ``` bash
 sudo apt install ./google-chrome-stable_current_amd64.deb
+```
+
+Configuration file
+-------------------
+```conf
+DB_HOST=
+DB_USER=
+DB_PASSWORD=
+DB_PORT=
+DB_NAME=products
+SERVER_PORT=8060
+SERVER_READ_TIMEOUT=60
+SERVER_WRITE_TIMEOUT=120
+SERVER_IDLE_TIMEOUT=120
+JWT_SECRET_TOKEN=
+JWT_ALGORITHM=
+JWT_EXPIRE_MINUTES=240
+CORS_ALLOWED_HOSTS=
+WEBSCRAPING_TIMEOUT=24
+K_USER=
+K_PASS=
+K_BROKER_ADDRESS=
+INITIAL_WEBPAGE=https://www.google.com
+TZ=UTC
 ```
