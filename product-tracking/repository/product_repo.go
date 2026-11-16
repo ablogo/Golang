@@ -45,6 +45,34 @@ func (r *ProductRepo) GetById(ctx context.Context, id int) *model.Product {
 	return &product
 }
 
+func (r *ProductRepo) GetHistoricalLowestPricesById(ctx context.Context, id int) *[]model.Price {
+	query := `SELECT DISTINCT ON (DATE(p.created_at)) p.price, p.created_at FROM prices as p WHERE p.product_id = $1
+	          AND p.price = (SELECT MIN(p1.price) FROM prices as p1 WHERE p1.product_id = $1 and DATE(p1.created_at) = DATE(p.created_at))
+			  ORDER BY DATE(p.created_at);`
+
+	rows, err := r.DB.Query(ctx, query, id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+		} else {
+			slog.Error("Fail to get products.", "description", err.Error())
+		}
+		return nil
+	}
+	defer rows.Close()
+
+	var prices []model.Price
+	for rows.Next() {
+		var p model.Price
+		err := rows.Scan(&p.Price, &p.CreatedAt)
+		if err != nil {
+			slog.Error("Fail to scan product.", "description", err.Error())
+			return nil
+		}
+		prices = append(prices, p)
+	}
+	return &prices
+}
+
 func (r *ProductRepo) GetByIdWithHistoricalPrices(ctx context.Context, id int) *model.Product {
 	query := `SELECT JSON_BUILD_OBJECT(
 	          'id', a.id,
@@ -96,6 +124,34 @@ func (r *ProductRepo) GetAll(ctx context.Context) *[]model.Product {
 	}
 
 	return &products
+}
+
+func (r *ProductRepo) GetHistoricalLowestPrices(ctx context.Context) *[]model.Price {
+	query := `SELECT DISTINCT ON (DATE(p.created_at)) p.price, p.created_at FROM prices as p WHERE p.product_id = $1
+	          AND p.price = (SELECT MIN(p1.price) FROM prices as p1 WHERE p1.product_id = $1 and DATE(p1.created_at) = DATE(p.created_at))
+			  ORDER BY DATE(p.created_at);`
+	rows, err := r.DB.Query(ctx, query)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+		} else {
+			slog.Error("Fail to get products.", "description", err.Error())
+		}
+		return nil
+	}
+	defer rows.Close()
+
+	var prices []model.Price
+	for rows.Next() {
+		var p model.Price
+		err := rows.Scan(&p.Price, &p.CreatedAt)
+		if err != nil {
+			slog.Error("Fail to scan product.", "description", err.Error())
+			return nil
+		}
+		prices = append(prices, p)
+	}
+
+	return &prices
 }
 
 func (r *ProductRepo) GetAllWithHistoricalPrices(ctx context.Context) *[]model.Product {

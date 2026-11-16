@@ -28,6 +28,7 @@ func (h *HttpHandler) StartServer() {
 	mux.HandleFunc("GET /", h.getIndex)
 	mux.HandleFunc("GET /product", h.Router.GetProduct)
 	mux.HandleFunc("GET /products", h.Router.GetProducts)
+	mux.HandleFunc("GET /prices/historical/{id}", h.Router.GetProductHistoricalLowestPrices)
 	mux.HandleFunc("POST /products", h.Router.CreateProduct)
 	mux.HandleFunc("PUT /product", h.Router.UpdateProduct)
 	mux.HandleFunc("DELETE /product", h.Router.DeleteProduct)
@@ -35,9 +36,9 @@ func (h *HttpHandler) StartServer() {
 	h.Server = &http.Server{
 		Addr:         ":" + h.Settings.SERVER_PORT,
 		Handler:      mux,
-		ReadTimeout:  time.Second * h.Server.ReadTimeout,
-		WriteTimeout: time.Second * h.Server.WriteTimeout,
-		IdleTimeout:  time.Second * h.Server.IdleTimeout,
+		ReadTimeout:  time.Second * time.Duration(h.Settings.SERVER_READ_TIMEOUT),
+		WriteTimeout: time.Second * time.Duration(h.Settings.SERVER_WRITE_TIMEOUT),
+		IdleTimeout:  time.Second * time.Duration(h.Settings.SERVER_IDLE_TIMEOUT),
 	}
 
 	slog.Info("Starting server on port " + h.Server.Addr)

@@ -26,6 +26,7 @@ type Settings struct {
 	K_BROKER_ADDRESS     string
 	K_USER               string
 	K_PASS               string
+	BROWSER_WAIT_TIME    int
 	INITIAL_WEBPAGE      string
 }
 
@@ -81,5 +82,6 @@ func (s *Settings) GetValues() {
 	s.K_USER = getEnvVariable("K_USER", "")
 	s.K_PASS = getEnvVariable("K_PASS", "")
 	s.K_BROKER_ADDRESS = getEnvVariable("K_BROKER_ADDRESS", "")
+	s.BROWSER_WAIT_TIME = getNumberEnvVariable("BROWSER_WAIT_TIME", 2)
 	s.INITIAL_WEBPAGE = getEnvVariable("INITIAL_WEBPAGE", "https://www.google.com/")
 }

@@ -75,6 +75,35 @@ func (u *Router) GetProduct(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (u *Router) GetProductHistoricalLowestPrices(w http.ResponseWriter, r *http.Request) {
+
+	/*user_id, ok := r.Context().Value("userId").(int)
+	if !ok {
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
+		return
+	}*/
+
+	queryParams := r.URL.Query()
+	product_id, err := strconv.Atoi(queryParams.Get("id"))
+	if err != nil {
+		http.Error(w, "Invalid input", http.StatusBadRequest)
+		return
+	}
+
+	prices := u.ProductSvc.GetHistoricalLowestPricesById(product_id)
+	if prices != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(prices); err != nil {
+			http.Error(w, "", http.StatusUnprocessableEntity)
+			return
+		}
+	} else {
+		http.Error(w, "", http.StatusNotFound)
+		return
+	}
+}
+
 func (u *Router) GetProducts(w http.ResponseWriter, r *http.Request) {
 
 	/*user_id, ok := r.Context().Value("userId").(int)
@@ -90,7 +119,7 @@ func (u *Router) GetProducts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	products := u.ProductSvc.GetProducts(history)
+	products := u.ProductSvc.GetAll(history)
 	if products != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -119,7 +148,7 @@ func (u *Router) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := u.ProductSvc.DeleteProduct(product_id)
+	result := u.ProductSvc.Delete(product_id)
 	if result {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -147,7 +176,7 @@ func (u *Router) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := u.ProductSvc.UpdateProduct(model)
+	result := u.ProductSvc.Update(model)
 	if result {
 		w.WriteHeader(http.StatusOK)
 		return
@@ -177,7 +206,7 @@ func (u *Router) UpdateProductPrice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := u.ProductSvc.UpdateProductPrice(product_id, price)
+	result := u.ProductSvc.UpdatePrice(product_id, price)
 	if result {
 		w.WriteHeader(http.StatusOK)
 		return
