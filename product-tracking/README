@@ -11,13 +11,16 @@ Requirements
 
 How to use it
 --------------
-1. Compile the source code to obtain a single standalone executable binary.
+1. Create a database on Postgresql and run the included script postgresql.sql
+
+2. Compile the source code to obtain a single standalone executable binary.
 ```bash
 go build .
 ```
 
-2. Run the executable binary
-(before running it is necessary to complete the configuration file(.env), and place it in the root folder)
+3. Before running it is necessary to complete the configuration file(.env), and place it in the root folder.
+
+4. Run the executable binary
 ```bash
 go run product-tracking
 ```
@@ -103,5 +106,6 @@ K_USER=
 K_PASS=
 K_BROKER_ADDRESS=
 INITIAL_WEBPAGE=https://www.google.com
+BROWSER_WAIT_TIME=2
 TZ=UTC
 ```

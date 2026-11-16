@@ -34,7 +34,7 @@ func check(err error, product_id int) {
 }
 
 func (d *DevTools) Execute() {
-	products := d.ProductSvc.GetProducts(false)
+	products := d.ProductSvc.GetAll(false)
 
 	if products == nil || len(*products) == 0 {
 		slog.Info("No products found on the db.")
@@ -75,6 +75,7 @@ func (d *DevTools) Execute() {
 		}
 
 		err = page.WaitLoad()
+		page.WaitStable(time.Second * time.Duration(d.KafkaSvc.Settings.BROWSER_WAIT_TIME))
 		if err != nil {
 			slog.Error("Product page loading problems.", "product_id ", v.ID)
 		}
@@ -87,20 +88,22 @@ func (d *DevTools) Execute() {
 				check(err, v.ID)
 			} else {
 				price, err = elem.Text()
-				slog.Info("HTML element text. " + price)
+				//slog.Info("HTML element text. " + price)
 			}
 
-			clean_price, err := d.ProductSvc.RegisterPrice(v.ID, price)
+			clean_price := d.ProductSvc.CleanPrice(v.ID, price)
 			if clean_price > 0 {
 
 				isLowestPrice := d.ProductSvc.IsLowestPrice(v.ID, clean_price)
 				if isLowestPrice {
+
 					msg := "Lower price detected, product id. " + strconv.Itoa(v.ID)
 					d.KafkaSvc.SendMessage(msg, "prices", "notifications")
 					slog.Info(msg)
 				}
 			}
 
+			d.ProductSvc.RegisterPrice(v.ID, clean_price, price)
 			time.Sleep(time.Second * time.Duration(rand.Intn(20)+6))
 		}
 	}

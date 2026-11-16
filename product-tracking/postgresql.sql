@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS products (
     url VARCHAR(240) UNIQUE NOT NULL,
     tag_id VARCHAR(280) NOT NULL,
     price DECIMAL(12,2) NOT NULL,
+    lowest_price DECIMAL(12,2) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -36,13 +37,12 @@ CREATE TABLE IF NOT EXISTS logs (
 CREATE INDEX idx_logs_timestamp ON logs(timestamp DESC);
 CREATE INDEX idx_logs_level ON logs(level);
 
+-- store procedure to get lowest price of product
 CREATE OR REPLACE PROCEDURE is_lowest_price(prod_id INT, new_price FLOAT, OUT lowest BOOLEAN)
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    -- Optional local variables
 BEGIN
-    -- SQL and PL/pgSQL procedural statements
 	SELECT NOT EXISTS (
 		SELECT p.price FROM prices AS p WHERE p.product_id = prod_id and p.price <= new_price
 	) INTO lowest;
@@ -50,3 +50,24 @@ BEGIN
     COMMIT; 
 END;
 $$;
+
+-- function
+CREATE OR REPLACE FUNCTION verify_lowest_price()
+RETURNS TRIGGER 
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF NEW.price > 0 AND NEW.price < (SELECT MIN(price) FROM prices WHERE product_id = NEW.product_id AND price  > 0) THEN
+	    UPDATE products SET lowest_price = NEW.price
+		WHERE id = NEW.product_id;
+	END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+-- trigger on prices table
+CREATE TRIGGER verify_lowest_price_trigger
+BEFORE INSERT ON prices
+FOR EACH ROW
+EXECUTE FUNCTION verify_lowest_price();
