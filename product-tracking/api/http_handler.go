@@ -21,21 +21,40 @@ func (h *HttpHandler) getIndex(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(time.Now().String()))
 }
 
+func corsMiddleware(next http.Handler) http.Handler {
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func (h *HttpHandler) StartServer() {
 
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /", h.getIndex)
-	mux.HandleFunc("GET /product", h.Router.GetProduct)
+	mux.HandleFunc("GET /product/{id}", h.Router.GetProduct)
 	mux.HandleFunc("GET /products", h.Router.GetProducts)
-	mux.HandleFunc("GET /prices/historical/{id}", h.Router.GetProductHistoricalLowestPrices)
-	mux.HandleFunc("POST /products", h.Router.CreateProduct)
+	mux.HandleFunc("GET /product/prices/historical/{id}", h.Router.GetProductHistoricalLowestPrices)
+	mux.HandleFunc("GET /product/prices/chart/{id}", h.Router.GetProductChartInfoById)
+	mux.HandleFunc("POST /product", h.Router.CreateProduct)
+	mux.HandleFunc("PUT /product/tracked/{id}", h.Router.ChangeProductTrackedStatus)
 	mux.HandleFunc("PUT /product", h.Router.UpdateProduct)
-	mux.HandleFunc("DELETE /product", h.Router.DeleteProduct)
+	mux.HandleFunc("DELETE /product/{id}", h.Router.DeleteProduct)
 
 	h.Server = &http.Server{
 		Addr:         ":" + h.Settings.SERVER_PORT,
-		Handler:      mux,
+		Handler:      corsMiddleware(mux),
 		ReadTimeout:  time.Second * time.Duration(h.Settings.SERVER_READ_TIMEOUT),
 		WriteTimeout: time.Second * time.Duration(h.Settings.SERVER_WRITE_TIMEOUT),
 		IdleTimeout:  time.Second * time.Duration(h.Settings.SERVER_IDLE_TIMEOUT),

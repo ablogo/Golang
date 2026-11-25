@@ -44,6 +44,11 @@ func (s *ProductService) GetById(id int, history bool) (product *model.Product) 
 	return
 }
 
+func (s *ProductService) GetChartInfoById(id int) (product *model.ChartInfo) {
+	product = s.Repo.GetChartInfoById(s.Ctx, id)
+	return
+}
+
 func (s *ProductService) GetHistoricalLowestPricesById(id int) (prices *[]model.Price) {
 	prices = s.Repo.GetHistoricalLowestPricesById(s.Ctx, id)
 	return
@@ -58,9 +63,19 @@ func (s *ProductService) GetAll(history bool) (products *[]model.Product) {
 	return
 }
 
+func (s *ProductService) GetAllToTrack() (products *[]model.Product) {
+	products = s.Repo.GetAllToTrack(s.Ctx)
+	return
+}
+
 func (s *ProductService) GetHistoricalLowestPrices(history bool) (prices *[]model.Price) {
 	prices = s.Repo.GetHistoricalLowestPrices(s.Ctx)
 	return
+}
+
+func (s *ProductService) ChangeTrackedStatus(product_id int) error {
+	result := s.Repo.ChangeTrackedStatus(s.Ctx, product_id)
+	return result
 }
 
 func (s *ProductService) IsLowestPrice(id int, price float64) bool {
@@ -81,7 +96,7 @@ func (s *ProductService) Delete(id int) bool {
 func (s *ProductService) Update(updated_product model.Product) bool {
 	result := s.Repo.Update(s.Ctx, &updated_product)
 
-	if result != nil {
+	if result == nil {
 		return true
 	} else {
 		return false

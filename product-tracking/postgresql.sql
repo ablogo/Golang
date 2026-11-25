@@ -6,9 +6,12 @@ CREATE TABLE IF NOT EXISTS products (
     id SERIAL PRIMARY KEY,
     name VARCHAR(240) NOT NULL,
     url VARCHAR(240) UNIQUE NOT NULL,
-    tag_id VARCHAR(280) NOT NULL,
-    price DECIMAL(12,2) NOT NULL,
-    lowest_price DECIMAL(12,2) NOT NULL,
+    tag_id VARCHAR(680) NOT NULL,
+    image_url VARCHAR(680) NULL DEFAULT '',
+    initial_price DECIMAL(12,2) NOT NULL,
+    current_price DECIMAL(12,2) NOT NULL DEFAULT 0,
+    lowest_price DECIMAL(12,2) NOT NULL DEFAULT 0,
+    is_tracked BOOLEAN NOT NULL DEFAULT 1,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -43,11 +46,14 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
 BEGIN
-	SELECT NOT EXISTS (
-		SELECT p.price FROM prices AS p WHERE p.product_id = prod_id and p.price <= new_price
-	) INTO lowest;
+    IF (SELECT EXISTS (SELECT p.price FROM prices AS p WHERE p.product_id = prod_id)) = FALSE THEN
+	    SELECT NOT EXISTS (
+            SELECT p.price FROM prices AS p WHERE p.product_id = prod_id AND p.price > 0 AND p.price <= new_price) INTO lowest;
+    ELSE
+        lowest := FALSE;
 
-    COMMIT; 
+    END IF;
+ 
 END;
 $$;
 
@@ -57,11 +63,16 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    IF NEW.price > 0 AND NEW.price < (SELECT MIN(price) FROM prices WHERE product_id = NEW.product_id AND price  > 0) THEN
+    IF (SELECT lowest_price FROM products WHERE id = NEW.product_id) = 0 THEN
+        UPDATE products SET lowest_price = NEW.price
+		WHERE id = NEW.product_id;
+    ELSIF NEW.price > 0 AND NEW.price < (SELECT MIN(price) FROM prices WHERE product_id = NEW.product_id AND price > 0) THEN
 	    UPDATE products SET lowest_price = NEW.price
 		WHERE id = NEW.product_id;
 	END IF;
 
+    UPDATE products SET current_price = NEW.price WHERE id = NEW.product_id;
+    
     RETURN NEW;
 END;
 $$;

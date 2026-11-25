@@ -27,11 +27,13 @@ go run product-tracking
 
 How to install as a daemon service
 ------------------------------------
-1. Move the .env file and the binary generated on the previous statement to a dedicated path.
+1. Move the .env file and the binary generated on the previous statement to a dedicated path, and grant execution permissions the binary.
 ```bash
 mkdir /ptrack
 mv product-tracking /ptrack/
 mv .env /ptrack/
+cd /ptrack
+sudo chmod +x product-tracking
 ```
 
 2. Create a file in the path "/etc/systemd/system/" with the following content.
