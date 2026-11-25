@@ -49,7 +49,7 @@ func (u *Router) GetProduct(w http.ResponseWriter, r *http.Request) {
 	}*/
 
 	queryParams := r.URL.Query()
-	product_id, err := strconv.Atoi(queryParams.Get("id"))
+	product_id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
@@ -57,8 +57,7 @@ func (u *Router) GetProduct(w http.ResponseWriter, r *http.Request) {
 
 	history, err := strconv.ParseBool(queryParams.Get("history"))
 	if err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
-		return
+		history = false
 	}
 
 	product := u.ProductSvc.GetById(product_id, history)
@@ -83,14 +82,41 @@ func (u *Router) GetProductHistoricalLowestPrices(w http.ResponseWriter, r *http
 		return
 	}*/
 
-	queryParams := r.URL.Query()
-	product_id, err := strconv.Atoi(queryParams.Get("id"))
+	product_id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
 
 	prices := u.ProductSvc.GetHistoricalLowestPricesById(product_id)
+	if prices != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(w).Encode(prices); err != nil {
+			http.Error(w, "", http.StatusUnprocessableEntity)
+			return
+		}
+	} else {
+		http.Error(w, "", http.StatusNotFound)
+		return
+	}
+}
+
+func (u *Router) GetProductChartInfoById(w http.ResponseWriter, r *http.Request) {
+
+	/*user_id, ok := r.Context().Value("userId").(int)
+	if !ok {
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
+		return
+	}*/
+
+	product_id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "Invalid input", http.StatusBadRequest)
+		return
+	}
+
+	prices := u.ProductSvc.GetChartInfoById(product_id)
 	if prices != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -141,8 +167,7 @@ func (u *Router) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}*/
 
-	queryParams := r.URL.Query()
-	product_id, err := strconv.Atoi(queryParams.Get("id"))
+	product_id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
@@ -154,6 +179,30 @@ func (u *Router) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	} else {
 		http.Error(w, "", http.StatusBadRequest)
+		return
+	}
+}
+
+func (u *Router) ChangeProductTrackedStatus(w http.ResponseWriter, r *http.Request) {
+
+	/*user_id, ok := r.Context().Value("userId").(int)
+	if !ok {
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
+		return
+	}*/
+
+	product_id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "Invalid input", http.StatusBadRequest)
+		return
+	}
+
+	result := u.ProductSvc.ChangeTrackedStatus(product_id)
+	if result == nil {
+		w.WriteHeader(http.StatusOK)
+		return
+	} else {
+		http.Error(w, "", http.StatusNotFound)
 		return
 	}
 }

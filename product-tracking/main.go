@@ -75,7 +75,7 @@ func main() {
 func backgroundWork(ctx context.Context, devTools *webscraping.DevTools, log *slog.Logger) {
 
 	log.Info("Background worker started..")
-	defer log.Info("Background worker finished.")
+	defer log.Info("Background worker finished defer.")
 
 	for {
 		select {
@@ -84,7 +84,7 @@ func backgroundWork(ctx context.Context, devTools *webscraping.DevTools, log *sl
 			return
 		default:
 			log.Info("Get product information starting..")
-			devTools.Execute()
+			devTools.Execute(ctx)
 			log.Info("Get product information ended.")
 			timeOff := rand.Intn(28) + 6
 			log.Info("Next execution in " + strconv.Itoa(timeOff) + " hours.")

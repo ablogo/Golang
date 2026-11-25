@@ -9,25 +9,26 @@ import (
 )
 
 type Settings struct {
-	DB_HOST              string
-	DB_NAME              string
-	DB_USER              string
-	DB_PASSWORD          string
-	DB_PORT              string
-	SERVER_PORT          string
-	SERVER_READ_TIMEOUT  int
-	SERVER_WRITE_TIMEOUT int
-	SERVER_IDLE_TIMEOUT  int
-	SERVER_MAX_HEADER    int
-	JWT_SECRET_TOKEN     string
-	JWT_ALGORITHM        string
-	JWT_EXPIRE_MINUTES   string
-	CORS_ALLOWED_HOSTS   string
-	K_BROKER_ADDRESS     string
-	K_USER               string
-	K_PASS               string
-	BROWSER_WAIT_TIME    int
-	INITIAL_WEBPAGE      string
+	DB_HOST               string
+	DB_NAME               string
+	DB_USER               string
+	DB_PASSWORD           string
+	DB_PORT               string
+	SERVER_PORT           string
+	SERVER_READ_TIMEOUT   int
+	SERVER_WRITE_TIMEOUT  int
+	SERVER_IDLE_TIMEOUT   int
+	SERVER_MAX_HEADER     int
+	JWT_SECRET_TOKEN      string
+	JWT_ALGORITHM         string
+	JWT_EXPIRE_MINUTES    string
+	CORS_ALLOWED_HOSTS    string
+	K_BROKER_ADDRESS      string
+	K_USER                string
+	K_PASS                string
+	BROWSER_DOM_WAIT_TIME int
+	BROWSER_DOM_DIFF_TIME int
+	INITIAL_WEBPAGE       string
 }
 
 var instance *Settings
@@ -82,6 +83,7 @@ func (s *Settings) GetValues() {
 	s.K_USER = getEnvVariable("K_USER", "")
 	s.K_PASS = getEnvVariable("K_PASS", "")
 	s.K_BROKER_ADDRESS = getEnvVariable("K_BROKER_ADDRESS", "")
-	s.BROWSER_WAIT_TIME = getNumberEnvVariable("BROWSER_WAIT_TIME", 2)
+	s.BROWSER_DOM_WAIT_TIME = getNumberEnvVariable("BROWSER_DOM_WAIT_TIME", 2)
+	s.BROWSER_DOM_DIFF_TIME = getNumberEnvVariable("BROWSER_DOM_DIFF_TIME", 4)
 	s.INITIAL_WEBPAGE = getEnvVariable("INITIAL_WEBPAGE", "https://www.google.com/")
 }
